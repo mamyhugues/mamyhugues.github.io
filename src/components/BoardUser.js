@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 
 import UserService from "../services/user.service";
 import EventBus from "../common/EventBus";
+import { Button } from "react-bootstrap";
 
 const BoardUser = () => {
   const [content, setContent] = useState("");
@@ -31,8 +32,11 @@ const BoardUser = () => {
   return (
     <div className="container">
       <header className="jumbotron">
-        <h3>Username: {content.username} - Roles : {content.roles}</h3>
+        <h3>Liste des applications</h3>
       </header>
+      <div>
+        <Button variant="primary">Télécharger la fiche d'opération</Button>
+      </div>
     </div>
   );
 };

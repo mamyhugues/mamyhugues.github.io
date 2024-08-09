@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Link } from "react-router-dom";
+import Container from 'react-bootstrap/Container';
+import Nav from 'react-bootstrap/Nav';
+import Navbar from 'react-bootstrap/Navbar';
+import NavDropdown from 'react-bootstrap/NavDropdown';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 
@@ -10,7 +14,8 @@ import Register from "./components/Register";
 import Home from "./components/Home";
 import Profile from "./components/Profile";
 import BoardUser from "./components/BoardUser";
-import BoardModerator from "./components/BoardModerator";
+import Operation from "./components/Operation";
+import MontantInitial from "./components/MontantInitial";
 import BoardAdmin from "./components/BoardAdmin";
 
 // import AuthVerify from "./common/AuthVerify";
@@ -27,7 +32,7 @@ const App = () => {
     if (user) {
       setCurrentUser(user);
       const roles = JSON.parse(user.roles);
-      setShowModeratorBoard(roles.includes("ROLE_GUEST"));
+      setShowModeratorBoard(roles.includes("ROLE_GUEST") || roles.includes("ROLE_ADMIN"));
       setShowAdminBoard(roles.includes("ROLE_ADMIN"));
     }
 
@@ -48,72 +53,36 @@ const App = () => {
   };
 
   return (
-    <div>
-      <nav className="navbar navbar-expand navbar-dark bg-dark">
-        <Link to={"/"} className="navbar-brand">
-          JamesAppli
-        </Link>
-        <div className="navbar-nav mr-auto">
-          <li className="nav-item">
-            <Link to={"/home"} className="nav-link">
-              Accueil
-            </Link>
-          </li>
-
-          {showModeratorBoard && (
-            <li className="nav-item">
-              <Link to={"/mod"} className="nav-link">
-                Moderator Board
-              </Link>
-            </li>
-          )}
-
-          {showAdminBoard && (
-            <li className="nav-item">
-              <Link to={"/admin"} className="nav-link">
-                Admin Board
-              </Link>
-            </li>
-          )}
-
-          {currentUser && (
-            <li className="nav-item">
-              <Link to={"/user"} className="nav-link">
-                Utilisateur
-              </Link>
-            </li>
-          )}
-        </div>
-
-        {currentUser ? (
-          <div className="navbar-nav ml-auto">
-            <li className="nav-item">
-              <Link to={"/profile"} className="nav-link">
-                {currentUser.username}
-              </Link>
-            </li>
-            <li className="nav-item">
-              <a href="/login" className="nav-link" onClick={logOut}>
-                Deconnecter
-              </a>
-            </li>
-          </div>
-        ) : (
-          <div className="navbar-nav ml-auto">
-            <li className="nav-item">
-              <Link to={"/login"} className="nav-link">
-                Connecter
-              </Link>
-            </li>
-
-            <li className="nav-item">
-              <Link to={"/register"} className="nav-link">
-                Enregistrer
-              </Link>
-            </li>
-          </div>
-        )}
-      </nav>
+    <>
+      <Navbar expand="lg" bg="primary" data-bs-theme="dark">
+        <Container>
+          <Navbar.Brand href={"/"} className="text-light">MyApp</Navbar.Brand>
+          <Nav className="me-auto d-flex flex-row">
+            {showModeratorBoard && (
+              <Nav.Link href={"/operation"} className="text-light" style={{marginRight:'10px'}}>Opération</Nav.Link>
+            )}
+            {showAdminBoard && (
+              <NavDropdown title="Admin" style={{color:'#fff'}} drop="end">
+                <NavDropdown.Item href={"/admin/initialize-montant"}>Réinitialisez Montant</NavDropdown.Item>
+                <NavDropdown.Item href={"/admin/download-excel"}>Télécharger l'opération</NavDropdown.Item>
+              </NavDropdown>
+            )}
+          </Nav>
+          <Navbar.Toggle id="toggle-two" color="white" />
+          <Navbar.Collapse className="justify-content-end">
+            {currentUser ? (
+              <Nav>
+                <Nav.Link href={"/profile"} className="text-light">{currentUser.username}</Nav.Link>
+                <Nav.Link href={"/login"} onClick={logOut} className="text-light">Deconnecter</Nav.Link>
+              </Nav>) : (
+              <Nav>
+                <Nav.Link href={"/login"} className="text-light">Connecter</Nav.Link>
+                <Nav.Link href={"/register"} className="text-light">Enregistrer</Nav.Link>
+              </Nav>)
+            }
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
 
       <div className="container mt-3">
         <Routes>
@@ -123,13 +92,14 @@ const App = () => {
           <Route exact path="/register" element={<Register />} />
           <Route exact path="/profile" element={<Profile />} />
           <Route path="/user" element={<BoardUser />} />
-          <Route path="/mod" element={<BoardModerator />} />
-          <Route path="/admin" element={<BoardAdmin />} />
+          <Route path="/operation" element={<Operation />} />
+          <Route path="/admin/initialize-montant" element={<MontantInitial />} />
+          <Route path="/admin/download-excel" element={<BoardAdmin />} />
         </Routes>
       </div>
 
       {/* <AuthVerify logOut={logOut}/> */}
-    </div>
+    </>
   );
 };
 

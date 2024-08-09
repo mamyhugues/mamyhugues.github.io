@@ -1,29 +1,23 @@
 import React, { useState, useEffect } from "react";
 import * as formik from 'formik';
 import * as yup from 'yup';
-import UserService from "../services/user.service";
 import { Alert, Button, Card, Form } from "react-bootstrap";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css"
-import OperationService from "../services/operation.service";
+import UserService from "../services/user.service";
 
-const BoardAdmin = () => {
+const MontantInitial = () => {
   const { Formik } = formik;
   const [users, setUsers] = useState([]);
   const [message, setMessage] = useState("");
   const [variant, setVariant] = useState("");
-  const [date, setDate] = useState(new Date());
   const signupSchema = yup.object().shape({
     utilisateur: yup.number().required("Il faut choisir un utilisateur"),
+    montant: yup.number().min(200, "Le montant doit être supérieur à 200"),
   });
-
   useEffect(() => {
     UserService.getPublicContent().then(
       (response) => {
         setUsers(response.data);
         setMessage(response.data.message)
-        setVariant('success');
-
       },
       (error) => {
         const _content =
@@ -32,73 +26,60 @@ const BoardAdmin = () => {
           error.toString();
 
         setMessage(_content);
-        setVariant('danger');
       }
     );
   }, []);
 
-  const getExcelFile = (values) => {
 
-    values.date = date.getFullYear() + '-' + (date.getMonth() + 1) +
-      '-' + date.getDate() + ' ' + date.getHours() + ':' +
-      date.getMinutes() + ':' + date.getSeconds();;
-    OperationService.downloadExcel(values).then(
-      (response)=>{
-        const href = URL.createObjectURL(response.data);
+  const handleMontantInitial = (values) => {
 
-        // create "a" HTML element with href to file & click
-        const link = document.createElement('a');
-        link.href = href;
-        link.setAttribute('download', 'operation.xlsx'); //or any other extension
-        document.body.appendChild(link);
-        link.click();
-    
-        // clean up "a" element & remove ObjectURL
-        document.body.removeChild(link);
-        URL.revokeObjectURL(href);
-        setMessage("Le téléchargement est effectué");
+    UserService.setMontantInitial(values).then(
+      (response) => {
+        setMessage(response.data.message);
         setVariant("success");
       },
-      (error)=>{
-        const message =
-          (error.response && error.response.data) ||
+      (error) => {
+        const resMessage =
+          (error.response &&
+            error.response.data &
+            error.response.data.message) ||
           error.message ||
           error.toString();
-        setMessage(message);
+        setMessage(resMessage);
         setVariant("danger");
       }
     );
-  }
+    /*  var data = new FormData(e.target);
+     var dataObject = Object.fromEntries(data);
+     let newMontant = [...montantInitial, dataObject];
+     setMontantInitial(newMontant);
+     localStorage.setItem('montant-initial', JSON.stringify(newMontant)); */
+  };
 
   function LstOption({ users }) {
-    const lstOption = [<option key={0} value="">--Choisir l'opérateur--</option>];
+    const lstOption = [<option key={0} value="0">--Choisir une opération--</option>];
     for (let user of users) {
       lstOption.push(<option key={user.id} value={user.id}>{user.username}</option>)
     }
     return lstOption;
   }
-
-  const changeDate = (date, values, e) => {
-    setDate(date)
-  }
-
   return (
     <Formik
       validationSchema={signupSchema}
-      onSubmit={getExcelFile}
+      onSubmit={handleMontantInitial}
       initialValues={{
         utilisateur: "",
-        date: new Date(),
+        montant: 0,
       }}
     >
       {({ values, handleSubmit, handleChange, errors }) => (
 
         <Card xs={6}>
-          <Card.Header as="h4">Télécharger l'opération d'un utilisateur</Card.Header>
+          <Card.Header as="h4">Initialisation montant</Card.Header>
           <Card.Body>
-            <Form noValidate onSubmit={handleSubmit} id="form-export-operation">
-              <Form.Group className="mb-3" controlId="operateur">
-                <Form.Label>Sélectionnez l'opérateur</Form.Label>
+            <Form noValidate onSubmit={handleSubmit} id="form-montant-initial">
+              <Form.Group className="mb-3" controlId="type">
+                <Form.Label>Opérateur</Form.Label>
                 <Form.Select
                   value={values.utilisateur}
                   onChange={handleChange}
@@ -111,17 +92,21 @@ const BoardAdmin = () => {
                   {errors.utilisateur}
                 </Form.Control.Feedback>
               </Form.Group>
-              <Form.Group className="mb-3" controlId="date">
-                <Form.Label>Sélectionnez une date</Form.Label>
-                <DatePicker
-                  selected={date}
-                  dateFormat={'dd/MM/Y'}
-                  onChange={changeDate}
-                  name="date"
+              <Form.Group className="mb-3" controlId="montant">
+                <Form.Label>Montant</Form.Label>
+                <Form.Control
+                  type="number"
+                  step="100" value={values.montant}
+                  name="montant"
+                  onChange={handleChange}
+                  isInvalid={!!errors.montant}
                 />
+                <Form.Control.Feedback type="invalid">
+                  {errors.montant}
+                </Form.Control.Feedback>
               </Form.Group>
               <Button variant="primary" type="submit">
-                Télécharger
+                Enregistrer
               </Button>
             </Form>
             {message && (
@@ -135,7 +120,6 @@ const BoardAdmin = () => {
       }
     </Formik>
   );
-
 };
 
-export default BoardAdmin;
+export default MontantInitial;
